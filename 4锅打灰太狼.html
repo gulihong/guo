@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+     <style media="screen">
+       *{
+         margin:0;
+         padding:0;
+       }
+       #wrap{
+         position: relative;
+
+         width: 320px;
+         height: 480px;
+         margin:0 auto;
+
+         background-image: url(game_bg.jpg);
+         background-repeat: no-repeat;
+         background-size: 100%;
+
+       }
+       #score_box{
+         position: absolute;
+         left: 60px;
+         top: 10px;
+
+         font-size: 20px;
+         font-weight:900;
+         color: white;
+       }
+       #progress_box{
+          position: absolute;
+          left: 63px;
+          top: 65px;
+
+          width: 180px;
+          height: 18px;
+
+          background-image: url(progress.png);
+       }
+       #wolf_box img{
+          position: absolute;
+      }
+       #menu,#gameOver{
+          position: absolute;
+          left: 0;
+          top: 200px;
+
+          width: 320px;
+
+          text-align: center;
+       }
+       #start,#help,#gameOver{
+         font-size: 30px;
+         line-height: 50px;
+         font-weight: 900;
+         color: #f60;
+         cursor: pointer;
+       }
+       #gameOver{
+        display: none;
+       }
+     </style>
+  </head>
+  <body>
+    <!-- 定义游戏面板 托盘 盛放游戏元素和游戏地图-->
+    <div id="wrap">
+     <!-- 计分器 -->
+     <div id="score_box">
+       0
+     </div>
+     <!-- 计时器 -->
+      <div id="progress_box">
+
+      </div>
+      <!-- 管理狼的容器 -->
+      <div id="wolf_box">
+
+      </div>
+      <!--  游戏开始菜单-->
+      <div id="menu">
+        <div id="start">
+          开始
+        </div>
+        <div id="help">
+          游戏帮助
+        </div>
+      </div>
+      <!-- 游戏结束菜单 -->
+      <div id="gameOver">
+        游戏结束
+      </div>
+    </div>
+  </body>
+  <script type="text/javascript">
+  // 获取分数标签
+  var scoreBox=document.querySelector('#score_box');
+  // 获取计时器标签
+  var progressBox=document.querySelector('#progress_box');
+  // 存放狼图片的容器
+  var wolfBox=document.querySelector('#wolf_box');
+  // 开始菜单
+  var menu=document.querySelector('#menu');
+  // 开始按钮
+  var start=document.querySelector('#start');
+  // 结束按钮
+  var gameOver=document.querySelector('#gameOver');
+  // 保存创建灰太狼定时器的id值
+  var createWolfTimer=null;
+  // 保存狼诞生坐标的数组
+  var arrPos=[
+    {left:"98px",top:"115px"},
+    {left:"17px",top:"160px"},
+    {left:"15px",top:"220px"},
+    {left:"30px",top:"293px"},
+    {left:"122px",top:"273px"},
+    {left:"207px",top:"295px"},
+    {left:"200px",top:"211px"},
+    {left:"187px",top:"141px"},
+    {left:"100px",top:"185px"}
+  ];
+  // 产生指定范围的随机数函数
+  function rand(min,max){
+  return  parseInt(Math.random()*(max-min)+min);
+  }
+
+start.onclick=function(){
+  // 调用开始游戏函数
+  gameStartFn();
+}
+// 定义开始游戏的函数
+function gameStartFn(){
+  // 隐藏开始菜单
+  menu.style.display='none';
+  // 调用开始计时器函数实现计时器递减
+  progressFn();
+  // 通过定时器让狼每隔0.8秒出现一次
+  createWolfTimer=setInterval(function(){
+    // 创建配置拼接狼标签
+    var wolf=createWolf();
+    // 控制让狼站起来的动画
+    wolf.apperWolf=setInterval(function(){
+      // 增加狼图片的下标值实现替换图片的功能
+      wolf.index++;
+      // 判断下标是否到达5 到了就清理定时器 调用让狼蹲下去的函数
+      if(wolf.index>=5){
+        clearInterval(wolf.apperWolf);
+        //TODO:调用让狼蹲下去的函数
+        wolf.disapper();
+      }
+      wolf.src=wolf.type+wolf.index+'.png';
+    },150);
+    // 定义让狼蹲下去的动画
+    wolf.disapper=function(){
+      //开启定时器 实现狼下蹲的动画
+      wolf.disapperTimer=setInterval(function(){
+        wolf.index--;
+        // 判断如果减到0，清理定时器 和标签
+        if(wolf.index<=0){
+          clearInterval(wolf.disapperTimer);
+
+          // 清理标签
+          wolfBox.children.length>0&&wolfBox.removeChild(wolf);//if条件的另外一种写法
+            //相当于 if(wolfBox.children.length>0){wolfBox.removeChild(wolf);}
+        }
+        wolf.src=wolf.type+wolf.index+'.png';
+      },150);
+    }
+    // 给狼设置标识位 看他是否被打过  该属性表明该狼是否已被打击 如果已被打击则不再执行打击动画 和层级计算函数
+    wolf.beat=false;//false标识未被打过
+    //给狼标签添加打击事件
+    wolf.onclick=function(){
+      //调用打狼函数实现打狼
+      beatWolf(wolf);
+
+    }
+  },800);
+}
+// 定义计时器递减函数
+function progressFn(){
+  var progressLength=progressBox.offsetWidth;
+  // 开启定时器 每100毫秒让进度条的长度-1
+  var progressTimer=setInterval(function(){
+    progressLength-=1;
+    // 判断进度条宽度是否小于0 小于0则清理计时器，清理计时器并弹出结束菜单
+    if(progressLength<=0){
+      // 清理计时器
+      clearInterval(progressTimer);
+      //TODO:此处调用游戏结束函数 （TODO表示待完成的意思）
+      gameOverFn();
+    }
+    // 修改计时器的宽度
+    progressBox.style.width=progressLength+'px';
+  },100);
+}
+// 定义创建 配置 拼接狼的函数
+function createWolf(){
+  // 创建保存狼图片的img标签
+  var wolf=document.createElement('img');
+  // 获取当前狼是灰太狼或小灰灰
+  wolf.type=rand(0,100)>80?'x':'h';
+  // 保存当前狼图片的下标
+  wolf.index=0;
+  // 给img标签设置src属性
+  wolf.src=wolf.type+wolf.index+'.png';
+  // 通过随机数获取狼的诞生点
+  var point=rand(0,arrPos.length);
+  wolf.style.left=arrPos[point].left;
+  wolf.style.top=arrPos[point].top;
+  // 把标签拼接进文档流
+  wolfBox.appendChild(wolf);
+  // 通过return把创建的标签返回出去
+  return wolf;
+
+}
+//定义游戏结束的函数
+function gameOverFn(){
+  // 显示结束菜单
+  gameOver.style.display='block';
+  // 清理狼定时器
+  clearInterval(createWolfTimer);
+}
+// 定义打狼的函数
+function  beatWolf(wolf){
+  // 判断是否要执行后边的代码
+  if(wolf.beat){
+    return;//阻断后边代码执行
+  }
+  wolf.beat=true;
+  //调用分数统计函数进行计分
+  scroing(wolf);
+  //让狼产生打击动画
+  //停止狼正在执行的动画
+  clearInterval(wolf.apperWolf);
+  clearInterval(wolf.disapperTimer);
+  //开启定时器产生打击动画
+  wolf.index=5;
+  wolf.beatTimer=setInterval(function(){
+    wolf.index++;
+    //判断是否>=9 清理定时器和标签
+    if(wolf.index>=9){
+      clearInterval(wolf.beatTimer);
+      wolfBox.removeChild(wolf);
+    }
+    wolf.src=wolf.type+wolf.index+'.png';
+  },150);
+}
+//定义计分函数
+function scroing(wolf){
+  //获取已经得到的分数
+  var score=parseInt(scoreBox.innerHTML);
+  //根据当前狼的type属性 决定分数加减
+  if(wolf.type=='x'){
+    score-=10;
+  }else if(wolf.type=='h'){
+    score+=10;
+  }
+  scoreBox.innerHTML=score;
+}
+
+
+
+  </script>
+</html>
